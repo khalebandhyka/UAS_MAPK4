@@ -1,5 +1,7 @@
 package com.example.ujournal.ui.screens
 
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -9,8 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.ujournal.Screen
 import com.example.ujournal.data.repository.JournalRepository
 import java.text.SimpleDateFormat
@@ -23,6 +28,7 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
     val entry = remember { JournalRepository.getEntryById(entryId) }
     var showMenu by remember { mutableStateOf(false) }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val context = LocalContext.current
 
     if (entry == null) {
         Box(
@@ -87,8 +93,27 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            if (entry.hasImage) {
-                // Placeholder for image
+            if (entry.hasImage && entry.imageUri != null) {
+                // Display the actual image
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(bottom = 16.dp)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context)
+                                .data(data = entry.imageUri)
+                                .build()
+                        ),
+                        contentDescription = "Journal Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            } else if (entry.hasImage) {
+                // Fallback if hasImage is true but imageUri is null
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -104,7 +129,7 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Image would be displayed here")
+                            Text("Image not available")
                         }
                     }
                 }
@@ -154,4 +179,3 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
         }
     }
 }
-

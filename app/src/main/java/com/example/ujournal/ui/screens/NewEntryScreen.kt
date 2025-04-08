@@ -1,5 +1,6 @@
 package com.example.ujournal.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
+import com.example.ujournal.ui.components.ImagePicker
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.layout.statusBars
@@ -23,6 +25,7 @@ fun NewEntryScreen(navController: NavController) {
     var entryContent by remember { mutableStateOf("") }
     var showImagePicker by remember { mutableStateOf(false) }
     var showLocationPicker by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     val currentDate = remember { Calendar.getInstance().time }
@@ -46,9 +49,10 @@ fun NewEntryScreen(navController: NavController) {
                                 val newEntryId = JournalRepository.addEntry(
                                     content = entryContent,
                                     date = currentDate,
-                                    hasImage = showImagePicker,
+                                    hasImage = selectedImageUri != null,
                                     hasLocation = showLocationPicker,
-                                    locationName = if (showLocationPicker) "Selected Location" else ""
+                                    locationName = if (showLocationPicker) "Selected Location" else "",
+                                    imageUri = selectedImageUri
                                 )
                                 navController.popBackStack()
                             }
@@ -88,7 +92,7 @@ fun NewEntryScreen(navController: NavController) {
                 Button(
                     onClick = { showImagePicker = !showImagePicker },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showImagePicker)
+                        containerColor = if (showImagePicker || selectedImageUri != null)
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant
@@ -114,31 +118,21 @@ fun NewEntryScreen(navController: NavController) {
                 }
             }
 
-            if (showImagePicker) {
+            if (showImagePicker || selectedImageUri != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ImagePickerPlaceholder()
+                ImagePicker(
+                    imageUri = selectedImageUri,
+                    onImageSelected = { uri ->
+                        selectedImageUri = uri
+                        showImagePicker = true
+                    }
+                )
             }
 
             if (showLocationPicker) {
                 Spacer(modifier = Modifier.height(16.dp))
                 LocationPickerPlaceholder()
             }
-        }
-    }
-}
-
-@Composable
-fun ImagePickerPlaceholder() {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Image Picker would appear here")
         }
     }
 }
@@ -158,4 +152,3 @@ fun LocationPickerPlaceholder() {
         }
     }
 }
-

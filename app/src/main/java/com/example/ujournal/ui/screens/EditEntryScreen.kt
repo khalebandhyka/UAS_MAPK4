@@ -1,5 +1,6 @@
 package com.example.ujournal.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -8,9 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
+import com.example.ujournal.ui.components.ImagePicker
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,6 +22,7 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
     var entryContent by remember { mutableStateOf(entry?.content ?: "") }
     var showImagePicker by remember { mutableStateOf(entry?.hasImage ?: false) }
     var showLocationPicker by remember { mutableStateOf(entry?.hasLocation ?: false) }
+    var selectedImageUri by remember { mutableStateOf(entry?.imageUri) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     if (entry == null) {
@@ -56,9 +58,10 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                                 JournalRepository.updateEntry(
                                     id = entryId,
                                     content = entryContent,
-                                    hasImage = showImagePicker,
+                                    hasImage = selectedImageUri != null,
                                     hasLocation = showLocationPicker,
-                                    locationName = if (showLocationPicker) "Updated Location" else ""
+                                    locationName = if (showLocationPicker) "Updated Location" else "",
+                                    imageUri = selectedImageUri
                                 )
                                 navController.popBackStack()
                             }
@@ -96,7 +99,7 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                 Button(
                     onClick = { showImagePicker = !showImagePicker },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showImagePicker)
+                        containerColor = if (showImagePicker || selectedImageUri != null)
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant
@@ -122,9 +125,15 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                 }
             }
 
-            if (showImagePicker) {
+            if (showImagePicker || selectedImageUri != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ImagePickerPlaceholder()
+                ImagePicker(
+                    imageUri = selectedImageUri,
+                    onImageSelected = { uri ->
+                        selectedImageUri = uri
+                        showImagePicker = true
+                    }
+                )
             }
 
             if (showLocationPicker) {
@@ -173,4 +182,3 @@ fun DeleteConfirmationDialog(
         }
     )
 }
-

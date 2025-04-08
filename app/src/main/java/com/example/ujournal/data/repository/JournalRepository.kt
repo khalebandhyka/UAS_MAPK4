@@ -1,56 +1,15 @@
 package com.example.ujournal.data.repository
 
+import android.net.Uri
 import com.example.ujournal.data.model.JournalEntry
 import java.util.*
+import kotlin.collections.ArrayList
 
-/**
- * A simple in-memory repository for journal entries.
- * In a real app, this would be backed by a database.
- */
 object JournalRepository {
-    private val entries = mutableListOf<JournalEntry>()
+    private val entries = ArrayList<JournalEntry>()
 
     init {
-        // Add some sample entries
-        val calendar = Calendar.getInstance()
-
-        // Today's entry
-        addEntry(
-            content = "Today was a great day! I went for a hike and saw some beautiful scenery.",
-            date = calendar.time,
-            hasImage = true,
-            hasLocation = true,
-            locationName = "Mountain Trail"
-        )
-
-        // Yesterday's entry
-        calendar.add(Calendar.DAY_OF_MONTH, -1)
-        addEntry(
-            content = "Spent the day reading a new book. It's really captivating!",
-            date = calendar.time,
-            hasImage = false,
-            hasLocation = false
-        )
-
-        // Entry from last week
-        calendar.add(Calendar.DAY_OF_MONTH, -6)
-        addEntry(
-            content = "Visited the beach with friends. The weather was perfect!",
-            date = calendar.time,
-            hasImage = true,
-            hasLocation = true,
-            locationName = "Sunny Beach"
-        )
-
-        // Entry from last month
-        calendar.add(Calendar.MONTH, -1)
-        addEntry(
-            content = "Started a new project today. Excited to see how it turns out!",
-            date = calendar.time,
-            hasImage = false,
-            hasLocation = true,
-            locationName = "Home Office"
-        )
+        // Add some sample entries if needed
     }
 
     fun getAllEntries(): List<JournalEntry> {
@@ -64,9 +23,10 @@ object JournalRepository {
     fun addEntry(
         content: String,
         date: Date,
-        hasImage: Boolean = false,
-        hasLocation: Boolean = false,
-        locationName: String = ""
+        hasImage: Boolean,
+        hasLocation: Boolean,
+        locationName: String = "",
+        imageUri: Uri? = null
     ): String {
         val id = UUID.randomUUID().toString()
         val entry = JournalEntry(
@@ -75,7 +35,8 @@ object JournalRepository {
             date = date,
             hasImage = hasImage,
             hasLocation = hasLocation,
-            locationName = locationName
+            locationName = locationName,
+            imageUri = imageUri
         )
         entries.add(entry)
         return id
@@ -86,24 +47,23 @@ object JournalRepository {
         content: String,
         hasImage: Boolean,
         hasLocation: Boolean,
-        locationName: String
-    ): Boolean {
+        locationName: String = "",
+        imageUri: Uri? = null
+    ) {
         val index = entries.indexOfFirst { it.id == id }
-        if (index == -1) return false
-
-        val updatedEntry = entries[index].copy(
-            content = content,
-            hasImage = hasImage,
-            hasLocation = hasLocation,
-            locationName = locationName
-        )
-        entries[index] = updatedEntry
-        return true
+        if (index != -1) {
+            val oldEntry = entries[index]
+            entries[index] = oldEntry.copy(
+                content = content,
+                hasImage = hasImage,
+                hasLocation = hasLocation,
+                locationName = locationName,
+                imageUri = imageUri ?: oldEntry.imageUri
+            )
+        }
     }
 
-    fun deleteEntry(id: String): Boolean {
-        val entry = entries.find { it.id == id } ?: return false
-        return entries.remove(entry)
+    fun deleteEntry(id: String) {
+        entries.removeIf { it.id == id }
     }
 }
-

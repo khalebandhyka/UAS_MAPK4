@@ -1,5 +1,6 @@
 package com.example.ujournal.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -10,8 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.ujournal.Screen
 import com.example.ujournal.data.model.JournalEntry
 import com.example.ujournal.data.repository.JournalRepository
@@ -23,7 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 @Composable
 fun MediaScreen(navController: NavController) {
     val entriesWithImages = remember {
-        JournalRepository.getAllEntries().filter { it.hasImage }
+        JournalRepository.getAllEntries().filter { it.hasImage && it.imageUri != null }
     }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
@@ -72,6 +77,7 @@ fun MediaItem(
     entry: JournalEntry,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     val formattedDate = dateFormat.format(entry.date)
 
@@ -84,16 +90,30 @@ fun MediaItem(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Placeholder for image
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Box(
+            // Display actual image
+            if (entry.imageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(data = entry.imageUri)
+                            .build()
+                    ),
+                    contentDescription = "Journal Image",
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                // Fallback if image is null
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Text("Image")
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Image")
+                    }
                 }
             }
 
@@ -113,4 +133,3 @@ fun MediaItem(
         }
     }
 }
-
