@@ -8,10 +8,6 @@ import kotlin.collections.ArrayList
 object JournalRepository {
     private val entries = ArrayList<JournalEntry>()
 
-    init {
-        // Add some sample entries if needed
-    }
-
     fun getAllEntries(): List<JournalEntry> {
         return entries.sortedByDescending { it.date }
     }

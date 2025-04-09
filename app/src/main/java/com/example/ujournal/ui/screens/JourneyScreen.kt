@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.padding
 @Composable
 fun JourneyScreen(navController: NavController) {
     val journalEntries = remember { JournalRepository.getAllEntries() }
-    val username = "John" // This would come from user preferences or authentication
+    val username = "Guest"
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Scaffold(
@@ -43,7 +43,6 @@ fun JourneyScreen(navController: NavController) {
                         Icon(Icons.Filled.Person, contentDescription = "Profile")
                     }
                 },
-                // Add padding to respect status bar
                 modifier = Modifier.padding(top = statusBarHeight)
             )
         },

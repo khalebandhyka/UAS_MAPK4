@@ -81,7 +81,6 @@ fun CalendarScreen(navController: NavController) {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // Month navigation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -115,7 +114,6 @@ fun CalendarScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Days of week header
             Row(modifier = Modifier.fillMaxWidth()) {
                 val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
                 daysOfWeek.forEach { day ->
@@ -130,7 +128,6 @@ fun CalendarScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Calendar grid
             CalendarGrid(
                 currentMonth = currentMonth,
                 daysWithEntries = daysWithEntries,
@@ -142,7 +139,6 @@ fun CalendarScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Entries for selected date
             if (selectedDate != null && entriesForSelectedDate.isNotEmpty()) {
                 Text(
                     text = "Entries for ${SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(selectedDate!!)}",

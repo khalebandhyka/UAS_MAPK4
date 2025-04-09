@@ -54,7 +54,6 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
-                                // Update the entry
                                 JournalRepository.updateEntry(
                                     id = entryId,
                                     content = entryContent,

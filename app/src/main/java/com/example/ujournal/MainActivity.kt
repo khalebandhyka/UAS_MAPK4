@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             UJournalTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -52,7 +51,6 @@ fun UJournalApp() {
     val currentDestination = currentBackStack?.destination
     val currentRoute = currentDestination?.route ?: "splash"
 
-    // Only show bottom bar on main app screens, not auth screens
     val showBottomBar = when {
         currentRoute == Screen.Journey.route ||
                 currentRoute == Screen.Calendar.route ||
@@ -62,13 +60,11 @@ fun UJournalApp() {
     }
 
     Scaffold(
-        // Remove the topBar parameter completely
         bottomBar = {
             if (showBottomBar) {
                 BottomNavigationBar(navController = navController, currentRoute = currentRoute)
             }
         },
-        // Use safeDrawing insets to respect system UI like status bar
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         NavHost(
@@ -76,7 +72,6 @@ fun UJournalApp() {
             startDestination = "splash",
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Authentication flow
             composable("splash") {
                 SplashScreen(navController)
             }
@@ -90,7 +85,6 @@ fun UJournalApp() {
                 LoginScreen(navController)
             }
 
-            // Main app screens with detailed implementations
             composable(Screen.Journey.route) {
                 JourneyScreen(navController = navController)
             }

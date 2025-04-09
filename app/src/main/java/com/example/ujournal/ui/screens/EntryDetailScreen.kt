@@ -74,8 +74,6 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                                 text = { Text("Delete") },
                                 onClick = {
                                     showMenu = false
-                                    // Show delete confirmation dialog
-                                    // For now, just navigate back
                                     JournalRepository.deleteEntry(entry.id)
                                     navController.popBackStack()
                                 }
@@ -94,7 +92,6 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                 .padding(16.dp)
         ) {
             if (entry.hasImage && entry.imageUri != null) {
-                // Display the actual image
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -23,14 +23,13 @@ fun AtlasScreen(navController: NavController) {
         JournalRepository.getAllEntries().filter { it.hasLocation }
     }
 
-    // Default: Jakarta jika tidak ada lokasi
     val initialPosition = if (entriesWithLocation.isNotEmpty() &&
         entriesWithLocation[0].latitude != null &&
         entriesWithLocation[0].longitude != null
     ) {
         LatLng(entriesWithLocation[0].latitude!!, entriesWithLocation[0].longitude!!)
     } else {
-        LatLng(-6.2, 106.8167) // Jakarta
+        LatLng(-6.2, 106.8167)
     }
 
     val cameraPositionState = rememberCameraPositionState {

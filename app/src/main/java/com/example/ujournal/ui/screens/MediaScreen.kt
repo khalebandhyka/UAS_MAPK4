@@ -90,7 +90,6 @@ fun MediaItem(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Display actual image
             if (entry.imageUri != null) {
                 Image(
                     painter = rememberAsyncImagePainter(
@@ -103,7 +102,6 @@ fun MediaItem(
                     contentScale = ContentScale.Crop
                 )
             } else {
-                // Fallback if image is null
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.surfaceVariant
