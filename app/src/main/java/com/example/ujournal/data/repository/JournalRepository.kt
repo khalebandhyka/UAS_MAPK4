@@ -26,6 +26,8 @@ object JournalRepository {
         hasImage: Boolean,
         hasLocation: Boolean,
         locationName: String = "",
+        latitude: Double? = null,
+        longitude: Double? = null,
         imageUri: Uri? = null
     ): String {
         val id = UUID.randomUUID().toString()
@@ -36,6 +38,8 @@ object JournalRepository {
             hasImage = hasImage,
             hasLocation = hasLocation,
             locationName = locationName,
+            latitude = latitude,
+            longitude = longitude,
             imageUri = imageUri
         )
         entries.add(entry)
@@ -48,6 +52,8 @@ object JournalRepository {
         hasImage: Boolean,
         hasLocation: Boolean,
         locationName: String = "",
+        latitude: Double? = null,
+        longitude: Double? = null,
         imageUri: Uri? = null
     ) {
         val index = entries.indexOfFirst { it.id == id }
@@ -58,10 +64,13 @@ object JournalRepository {
                 hasImage = hasImage,
                 hasLocation = hasLocation,
                 locationName = locationName,
+                latitude = latitude ?: oldEntry.latitude,
+                longitude = longitude ?: oldEntry.longitude,
                 imageUri = imageUri ?: oldEntry.imageUri
             )
         }
     }
+
 
     fun deleteEntry(id: String) {
         entries.removeIf { it.id == id }

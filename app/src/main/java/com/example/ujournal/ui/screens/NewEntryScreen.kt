@@ -18,6 +18,13 @@ import com.example.ujournal.ui.components.ImagePicker
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.layout.statusBars
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +34,10 @@ fun NewEntryScreen(navController: NavController) {
     var showLocationPicker by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    var selectedLatLng by remember { mutableStateOf<LatLng?>(null) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(LatLng(-6.2, 106.8167), 10f) // Jakarta default
+    }
 
     val currentDate = remember { Calendar.getInstance().time }
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
@@ -45,19 +56,21 @@ fun NewEntryScreen(navController: NavController) {
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
-                                // Save the entry
                                 val newEntryId = JournalRepository.addEntry(
                                     content = entryContent,
                                     date = currentDate,
                                     hasImage = selectedImageUri != null,
-                                    hasLocation = showLocationPicker,
-                                    locationName = if (showLocationPicker) "Selected Location" else "",
+                                    hasLocation = selectedLatLng != null,
+                                    locationName = if (selectedLatLng != null) "Lokasi Ditentukan" else "",
+                                    latitude = selectedLatLng?.latitude,
+                                    longitude = selectedLatLng?.longitude,
                                     imageUri = selectedImageUri
                                 )
                                 navController.popBackStack()
                             }
                         }
-                    ) {
+                    )
+                    {
                         Icon(Icons.Filled.Check, contentDescription = "Save")
                     }
                 },
@@ -131,7 +144,30 @@ fun NewEntryScreen(navController: NavController) {
 
             if (showLocationPicker) {
                 Spacer(modifier = Modifier.height(16.dp))
-                LocationPickerPlaceholder()
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng ->
+                        selectedLatLng = latLng
+                    }
+                ) {
+                    selectedLatLng?.let {
+                        Marker(
+                            state = MarkerState(position = it),
+                            title = "Lokasi Dipilih",
+                            snippet = "Klik simpan untuk menyimpan lokasi ini"
+                        )
+                    }
+                }
+                if (selectedLatLng != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Lokasi dipilih: ${selectedLatLng!!.latitude}, ${selectedLatLng!!.longitude}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
     }

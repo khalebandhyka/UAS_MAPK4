@@ -10,5 +10,7 @@ data class JournalEntry(
     val hasImage: Boolean,
     val hasLocation: Boolean,
     val locationName: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val imageUri: Uri? = null
 )

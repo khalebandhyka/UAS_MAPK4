@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import com.example.journeyjournal.screen.AtlasScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,4 +131,3 @@ fun DefaultPreview() {
         UJournalApp()
     }
 }
-
