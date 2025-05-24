@@ -3,5 +3,22 @@
     "database": "(default)",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "host": "127.0.0.1",
+      "port": 9198
+    },
+    "ui": {
+      "enabled": true,
+      "port": 9199
+    },
+    "singleProjectMode": true
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
