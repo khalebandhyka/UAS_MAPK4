@@ -63,10 +63,13 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation(libs.bundles.compose)
+    implementation("com.google.firebase:firebase-auth-ktx")
 
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation(libs.play.services.maps)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
 
     // Testing
     testImplementation(libs.junit)

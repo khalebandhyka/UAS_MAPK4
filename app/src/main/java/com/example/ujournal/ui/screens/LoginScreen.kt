@@ -20,22 +20,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ujournal.R
-import com.example.ujournal.data.dummyUsers
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.padding
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
-
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var switchState by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Column(
@@ -107,12 +108,16 @@ fun LoginScreen(navController: NavController) {
 
         Button(
             onClick = {
-                val userFound = dummyUsers.any { it.email == email && it.password == pass }
-
-                if (userFound) {
-                    navController.navigate("journey")
-                } else {
-                    Toast.makeText(context, "Email atau password salah", Toast.LENGTH_SHORT).show()
+                coroutineScope.launch {
+                    val auth = Firebase.auth
+                    auth.signInWithEmailAndPassword(email, pass)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                navController.navigate("journey")
+                            } else {
+                                Toast.makeText(context, "Login gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 }
             },
             modifier = Modifier

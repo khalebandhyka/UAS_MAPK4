@@ -1,6 +1,7 @@
 package com.example.ujournal
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -27,10 +28,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import com.example.journeyjournal.screen.AtlasScreen
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        private const val TAG = "MainActivity"
+        private var isEmulatorInitialized = false
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize Firebase
+        try {
+            FirebaseApp.initializeApp(this)
+            Log.d(TAG, "Firebase initialized successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize Firebase", e)
+        }
+
+        // Initialize Firebase Emulators (only once)
+        initializeFirebaseEmulators()
+
         setContent {
             UJournalTheme {
                 Surface(
@@ -41,6 +64,52 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun initializeFirebaseEmulators() {
+        if (!isEmulatorInitialized) {
+            try {
+                // Firebase Auth Emulator
+                FirebaseAuth.getInstance().useEmulator("10.0.2.2", 9099)
+                Log.d(TAG, "Firebase Auth Emulator connected to 10.0.2.2:9099")
+
+                FirebaseFirestore.getInstance().useEmulator("10.0.2.2", 8080)
+                Log.d(TAG, "Firebase Firestore Emulator connected to 10.0.2.2:8080")
+
+                // Firebase Storage Emulator (untuk nanti)
+                FirebaseStorage.getInstance().useEmulator("10.0.2.2", 9198)
+                Log.d(TAG, "Firebase Storage Emulator connected to 10.0.2.2:9199")
+
+                isEmulatorInitialized = true
+                Log.d(TAG, "All Firebase Emulators initialized successfully")
+
+                // Test connection
+                testFirebaseConnection()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize Firebase Emulators", e)
+            }
+        } else {
+            Log.d(TAG, "Firebase Emulators already initialized")
+        }
+    }
+
+    private fun testFirebaseConnection() {
+        val auth = FirebaseAuth.getInstance()
+        Log.d(TAG, "Firebase Auth instance: ${auth}")
+        Log.d(TAG, "Current user: ${auth.currentUser}")
+
+        // Test dengan anonymous sign in untuk memastikan koneksi
+        auth.signInAnonymously()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Firebase Auth connection test successful")
+                    // Sign out immediately after test
+                    auth.signOut()
+                } else {
+                    Log.e(TAG, "Firebase Auth connection test failed", task.exception)
+                }
+            }
     }
 }
 
@@ -83,6 +152,9 @@ fun UJournalApp() {
             }
             composable("login_screen") {
                 LoginScreen(navController)
+            }
+            composable("JourneyScreen") {
+                JourneyScreen(navController)
             }
 
             composable(Screen.Journey.route) {

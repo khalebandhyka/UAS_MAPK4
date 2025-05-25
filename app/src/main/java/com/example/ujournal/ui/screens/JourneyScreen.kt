@@ -22,13 +22,17 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.padding
+import com.google.firebase.auth.FirebaseAuth // ✅ Tambahkan ini
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JourneyScreen(navController: NavController) {
     val journalEntries = remember { JournalRepository.getAllEntries() }
-    val username = "Guest"
+
+    // ✅ Ambil nama user dari Firebase Auth
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val username = currentUser?.displayName ?: "Guest"
+
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Scaffold(
@@ -154,4 +158,3 @@ fun JournalEntryCard(
         }
     }
 }
-
