@@ -1,27 +1,26 @@
 {
   "firestore": {
-    "database": "(default)",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "emulators": {
+    "auth": {
+      "port": 9099
+    },
     "firestore": {
       "port": 8080
     },
     "storage": {
       "host": "127.0.0.1",
-      "port": 9198
+      "port": 9199
     },
     "ui": {
       "enabled": true,
-      "port": 9199
+      "port": 4000
     },
-    "singleProjectMode": true,
-    "auth": {
-      "port": 9099
-    }
-  },
-  "storage": {
-    "rules": "storage.rules"
+    "singleProjectMode": true
   }
 }

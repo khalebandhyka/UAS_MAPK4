@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
             try {
                 // Firebase Auth Emulator
                 FirebaseAuth.getInstance().useEmulator("10.0.2.2", 9099)
-                Log.d(TAG, "Firebase Auth Emulator connected to 10.0.2.2:9099")
+                Log.d( TAG, "Firebase Auth Emulator connected to 10.0.2.2:9099")
 
                 FirebaseFirestore.getInstance().useEmulator("10.0.2.2", 8080)
                 Log.d(TAG, "Firebase Firestore Emulator connected to 10.0.2.2:8080")
