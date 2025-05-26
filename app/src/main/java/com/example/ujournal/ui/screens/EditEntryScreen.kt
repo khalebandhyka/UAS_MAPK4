@@ -14,10 +14,13 @@ import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEntryScreen(navController: NavController, entryId: String) {
+    val coroutineScope = rememberCoroutineScope() // coroutine scope untuk launch fungsi suspend
+
     val entry = remember { JournalRepository.getEntryById(entryId) }
     var entryContent by remember { mutableStateOf(entry?.content ?: "") }
     var showImagePicker by remember { mutableStateOf(entry?.hasImage ?: false) }
@@ -54,15 +57,17 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
-                                JournalRepository.updateEntry(
-                                    id = entryId,
-                                    content = entryContent,
-                                    hasImage = selectedImageUri != null,
-                                    hasLocation = showLocationPicker,
-                                    locationName = if (showLocationPicker) "Updated Location" else "",
-                                    imageUri = selectedImageUri
-                                )
-                                navController.popBackStack()
+                                coroutineScope.launch {
+                                    JournalRepository.updateEntry(
+                                        id = entryId,
+                                        content = entryContent,
+                                        hasImage = selectedImageUri != null,
+                                        hasLocation = showLocationPicker,
+                                        locationName = if (showLocationPicker) "Updated Location" else "",
+                                        imageUri = selectedImageUri
+                                    )
+                                    navController.popBackStack()
+                                }
                             }
                         }
                     ) {
@@ -144,14 +149,32 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
         if (showDeleteConfirmation) {
             DeleteConfirmationDialog(
                 onConfirm = {
-                    JournalRepository.deleteEntry(entryId)
-                    showDeleteConfirmation = false
-                    navController.popBackStack()
+                    coroutineScope.launch {
+                        JournalRepository.deleteEntry(entryId)
+                        showDeleteConfirmation = false
+                        navController.popBackStack()
+                    }
                 },
                 onDismiss = {
                     showDeleteConfirmation = false
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun LocationPickerPlaceholder() {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Location Picker would appear here")
         }
     }
 }

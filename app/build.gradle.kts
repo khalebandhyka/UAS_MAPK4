@@ -28,19 +28,24 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.13"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -49,7 +54,7 @@ android {
 }
 
 dependencies {
-    // AndroidX
+    // AndroidX dan Jetpack
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -58,18 +63,27 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.material)
 
-    // Compose
+    // Compose BOM
     implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose)
+
+    // Firebase BOM dan modul
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
-    implementation(libs.bundles.compose)
     implementation("com.google.firebase:firebase-auth-ktx")
-
-    // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation(libs.play.services.maps)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
+
+    // Coil (untuk image loading di Compose)
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    // Google Maps dan Maps Compose
+    implementation("com.google.maps.android:maps-compose:2.11.4")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    // Lokasi & coroutine (untuk ambil geotag)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // Testing
     testImplementation(libs.junit)
@@ -78,10 +92,7 @@ dependencies {
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
 
-    // Debug
+    // Debug tools
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
-
-    implementation("com.google.maps.android:maps-compose:2.11.4")
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
 }
