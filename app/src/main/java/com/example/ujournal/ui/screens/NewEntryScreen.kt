@@ -1,47 +1,80 @@
 package com.example.ujournal.ui.screens
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.net.Uri
+import android.location.Geocoder
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
-import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.foundation.layout.statusBars
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
-
+import com.google.maps.android.compose.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("MissingPermission")
 @Composable
 fun NewEntryScreen(navController: NavController) {
+    val context = LocalContext.current
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
     var entryContent by remember { mutableStateOf("") }
     var showImagePicker by remember { mutableStateOf(false) }
     var showLocationPicker by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     var selectedLatLng by remember { mutableStateOf<LatLng?>(null) }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(-6.2, 106.8167), 10f) // Jakarta default
+        position = CameraPosition.fromLatLngZoom(LatLng(-6.2, 106.8167), 10f) // Default Jakarta
     }
 
     val currentDate = remember { Calendar.getInstance().time }
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
     val formattedDate = dateFormat.format(currentDate)
+
+    // Search Location Function
+    suspend fun searchLocation(query: String, context: Context): LatLng? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                val addresses = geocoder.getFromLocationName(query, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    LatLng(addresses[0].latitude, addresses[0].longitude)
+                } else null
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    // Handle search event
+    LaunchedEffect(isSearching) {
+        if (isSearching && searchQuery.isNotBlank()) {
+            val location = searchLocation(searchQuery, context)
+            location?.let {
+                selectedLatLng = it
+                cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 15f))
+            }
+            isSearching = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -56,7 +89,7 @@ fun NewEntryScreen(navController: NavController) {
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
-                                val newEntryId = JournalRepository.addEntry(
+                                JournalRepository.addEntry(
                                     content = entryContent,
                                     date = currentDate,
                                     hasImage = selectedImageUri != null,
@@ -69,8 +102,7 @@ fun NewEntryScreen(navController: NavController) {
                                 navController.popBackStack()
                             }
                         }
-                    )
-                    {
+                    ) {
                         Icon(Icons.Filled.Check, contentDescription = "Save")
                     }
                 },
@@ -144,6 +176,27 @@ fun NewEntryScreen(navController: NavController) {
 
             if (showLocationPicker) {
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Cari lokasi...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotBlank()) {
+                                isSearching = true
+                            }
+                        }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoogleMap(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -161,6 +214,7 @@ fun NewEntryScreen(navController: NavController) {
                         )
                     }
                 }
+
                 if (selectedLatLng != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -172,7 +226,6 @@ fun NewEntryScreen(navController: NavController) {
         }
     }
 }
-
 @Composable
 fun LocationPickerPlaceholder() {
     Card(
