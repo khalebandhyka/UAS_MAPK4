@@ -14,14 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,13 +51,6 @@ fun NewEntryScreen(navController: NavController) {
     val currentDate = remember { Calendar.getInstance().time }
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
     val formattedDate = dateFormat.format(currentDate)
-
-    val firestore = remember { FirebaseFirestore.getInstance() }
-
-    // Connect to emulator once
-    LaunchedEffect(Unit) {
-        firestore.useEmulator("10.0.2.2", 8080)
-    }
 
     suspend fun searchLocation(query: String, context: Context): LatLng? {
         return withContext(Dispatchers.IO) {
@@ -97,27 +90,26 @@ fun NewEntryScreen(navController: NavController) {
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
-                                val entry = hashMapOf(
-                                    "content" to entryContent,
-                                    "date" to currentDate,
-                                    "hasImage" to (selectedImageUri != null),
-                                    "hasLocation" to (selectedLatLng != null),
-                                    "locationName" to if (selectedLatLng != null) "Lokasi Ditentukan" else "",
-                                    "latitude" to selectedLatLng?.latitude,
-                                    "longitude" to selectedLatLng?.longitude,
-                                    "imageUri" to selectedImageUri?.toString()
-                                )
-
-                                firestore.collection("journal_entries")
-                                    .add(entry)
-                                    .addOnSuccessListener {
+                                coroutineScope.launch {
+                                    try {
+                                        JournalRepository.addEntry(
+                                            content = entryContent,
+                                            date = currentDate,
+                                            hasImage = selectedImageUri != null,
+                                            hasLocation = selectedLatLng != null,
+                                            locationName = if (selectedLatLng != null) "Lokasi Ditentukan" else "",
+                                            latitude = selectedLatLng?.latitude,
+                                            longitude = selectedLatLng?.longitude,
+                                            imageUri = selectedImageUri
+                                        )
+                                        // Tampilkan snackbar dulu
+                                        snackbarHostState.showSnackbar("Jurnal Published")
+                                        // Baru kembali ke layar sebelumnya
                                         navController.popBackStack()
+                                    } catch (e: Exception) {
+                                        snackbarHostState.showSnackbar("Gagal menyimpan entri. Coba lagi.")
                                     }
-                                    .addOnFailureListener {
-                                        coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Gagal menyimpan entri. Coba lagi.")
-                                        }
-                                    }
+                                }
                             } else {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar("Isi catatan tidak boleh kosong.")

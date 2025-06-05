@@ -22,14 +22,15 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
-import com.google.firebase.auth.FirebaseAuth // ✅ Tambahkan ini
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JourneyScreen(navController: NavController) {
-    val journalEntries = remember { JournalRepository.getAllEntries() }
+    val journalEntries by produceState<List<JournalEntry>>(initialValue = emptyList()) {
+        value = JournalRepository.fetchEntriesFromFirestore()
+    }
 
-    // ✅ Ambil nama user dari Firebase Auth
     val currentUser = FirebaseAuth.getInstance().currentUser
     val username = currentUser?.displayName ?: "Guest"
 
@@ -66,7 +67,7 @@ fun JourneyScreen(navController: NavController) {
             )
         } else {
             JourneyContent(
-                entries = journalEntries,
+                journal_entries = journalEntries,
                 onEntryClick = { entryId ->
                     navController.navigate("${Screen.EntryDetail.route}/$entryId")
                 },
@@ -93,7 +94,7 @@ fun EmptyJourneyContent(modifier: Modifier = Modifier) {
 
 @Composable
 fun JourneyContent(
-    entries: List<JournalEntry>,
+    journal_entries: List<JournalEntry>,
     onEntryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -102,7 +103,7 @@ fun JourneyContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(entries) { entry ->
+        items(journal_entries) { entry ->
             JournalEntryCard(
                 entry = entry,
                 onClick = { onEntryClick(entry.id) }
