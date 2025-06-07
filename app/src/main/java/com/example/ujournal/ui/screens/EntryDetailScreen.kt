@@ -91,7 +91,7 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            if (entry.hasImage && entry.imageUri != null) {
+            if (entry.hasImage && entry.imageBase64 != null) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -101,7 +101,7 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                     Image(
                         painter = rememberAsyncImagePainter(
                             ImageRequest.Builder(context)
-                                .data(data = entry.imageUri)
+                                .data(data = entry.imageBase64)
                                 .build()
                         ),
                         contentDescription = "Journal Image",

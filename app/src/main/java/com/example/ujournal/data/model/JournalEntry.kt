@@ -1,6 +1,5 @@
 package com.example.ujournal.data.model
 
-import android.net.Uri
 import java.util.*
 
 data class JournalEntry(
@@ -12,6 +11,5 @@ data class JournalEntry(
     val locationName: String = "",
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val imageUri: Uri? = null,
-    val imageUrl: String? = null
+    val imageBase64: String? = null // disimpan di Firestore
 )

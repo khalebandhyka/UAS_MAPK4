@@ -1,6 +1,8 @@
 package com.example.ujournal.ui.screens
 
 import android.net.Uri
+import android.util.Base64
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -8,38 +10,52 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.ujournal.data.model.JournalEntry
 import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEntryScreen(navController: NavController, entryId: String) {
-    val coroutineScope = rememberCoroutineScope() // coroutine scope untuk launch fungsi suspend
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    val entry = remember { JournalRepository.getEntryById(entryId) }
-    var entryContent by remember { mutableStateOf(entry?.content ?: "") }
-    var showImagePicker by remember { mutableStateOf(entry?.hasImage ?: false) }
-    var showLocationPicker by remember { mutableStateOf(entry?.hasLocation ?: false) }
-    var selectedImageUri by remember { mutableStateOf(entry?.imageUri) }
+    var entry by remember { mutableStateOf<JournalEntry?>(null) }
+
+    var entryContent by remember { mutableStateOf("") }
+    var showImagePicker by remember { mutableStateOf(false) }
+    var showLocationPicker by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
+    // Fetch entry
+    LaunchedEffect(entryId) {
+        entry = JournalRepository.getEntryById(entryId)
+        entry?.let {
+            entryContent = it.content
+            showImagePicker = it.hasImage
+            showLocationPicker = it.hasLocation
+        }
+    }
+
     if (entry == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Entry not found")
         }
         return
     }
 
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
-    val formattedDate = dateFormat.format(entry.date)
+    val formattedDate = dateFormat.format(entry!!.date)
 
     Scaffold(
         topBar = {
@@ -59,6 +75,7 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                             if (entryContent.isNotBlank()) {
                                 coroutineScope.launch {
                                     JournalRepository.updateEntry(
+                                        context = context,
                                         id = entryId,
                                         content = entryContent,
                                         hasImage = selectedImageUri != null,
@@ -129,8 +146,10 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                 }
             }
 
-            if (showImagePicker || selectedImageUri != null) {
+            if (showImagePicker || selectedImageUri != null || entry?.imageBase64 != null) {
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Gunakan ImagePicker jika user memilih gambar baru
                 ImagePicker(
                     imageUri = selectedImageUri,
                     onImageSelected = { uri ->
@@ -138,6 +157,22 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                         showImagePicker = true
                     }
                 )
+
+                // Tampilkan gambar lama jika belum ada gambar baru
+                if (selectedImageUri == null && entry?.imageBase64 != null) {
+                    val imageBytes = Base64.decode(entry!!.imageBase64, Base64.DEFAULT)
+                    val imageFile = File.createTempFile("temp", ".jpg", context.cacheDir).apply {
+                        FileOutputStream(this).use { it.write(imageBytes) }
+                    }
+                    val tempUri = Uri.fromFile(imageFile)
+                    Image(
+                        painter = rememberAsyncImagePainter(tempUri),
+                        contentDescription = "Saved Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                }
             }
 
             if (showLocationPicker) {
@@ -165,9 +200,7 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
 
 @Composable
 fun LocationPickerPlaceholder() {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,16 +222,12 @@ fun DeleteConfirmationDialog(
         title = { Text("Delete Entry") },
         text = { Text("Are you sure you want to delete this entry? This action cannot be undone.") },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm
-            ) {
+            TextButton(onClick = onConfirm) {
                 Text("Delete")
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = onDismiss
-            ) {
+            TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         }

@@ -9,13 +9,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
+import com.example.ujournal.Screen
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -93,6 +93,7 @@ fun NewEntryScreen(navController: NavController) {
                                 coroutineScope.launch {
                                     try {
                                         JournalRepository.addEntry(
+                                            context = context,
                                             content = entryContent,
                                             date = currentDate,
                                             hasImage = selectedImageUri != null,
@@ -102,10 +103,15 @@ fun NewEntryScreen(navController: NavController) {
                                             longitude = selectedLatLng?.longitude,
                                             imageUri = selectedImageUri
                                         )
-                                        // Tampilkan snackbar dulu
                                         snackbarHostState.showSnackbar("Jurnal Published")
-                                        // Baru kembali ke layar sebelumnya
-                                        navController.popBackStack()
+
+                                        // ✅ Navigasi ke JourneyScreen dengan benar agar BottomBar muncul
+                                        navController.navigate(Screen.Journey.route) {
+                                            popUpTo(Screen.Journey.route) {
+                                                inclusive = true
+                                            }
+                                            launchSingleTop = true
+                                        }
                                     } catch (e: Exception) {
                                         snackbarHostState.showSnackbar("Gagal menyimpan entri. Coba lagi.")
                                     }
@@ -231,10 +237,10 @@ fun NewEntryScreen(navController: NavController) {
                     }
                 }
 
-                if (selectedLatLng != null) {
+                selectedLatLng?.let {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Lokasi dipilih: ${selectedLatLng!!.latitude}, ${selectedLatLng!!.longitude}",
+                        text = "Lokasi dipilih: ${it.latitude}, ${it.longitude}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 @Composable
 fun MediaScreen(navController: NavController) {
     val entriesWithImages = remember {
-        JournalRepository.getAllEntries().filter { it.hasImage && it.imageUri != null }
+        JournalRepository.getAllEntries().filter { it.hasImage && it.imageBase64 != null }
     }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
@@ -90,11 +90,11 @@ fun MediaItem(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (entry.imageUri != null) {
+            if (entry.imageBase64 != null) {
                 Image(
                     painter = rememberAsyncImagePainter(
                         ImageRequest.Builder(context)
-                            .data(data = entry.imageUri)
+                            .data(data = entry.imageBase64)
                             .build()
                     ),
                     contentDescription = "Journal Image",
