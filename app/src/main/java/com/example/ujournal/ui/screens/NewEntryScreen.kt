@@ -1,6 +1,7 @@
 package com.example.ujournal.ui.screens
 
 import android.annotation.SuppressLint
+import android.app.DatePickerDialog
 import android.content.Context
 import android.location.Geocoder
 import android.net.Uri
@@ -14,8 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
-import com.example.ujournal.ui.components.ImagePicker
 import com.example.ujournal.Screen
+import com.example.ujournal.ui.components.ImagePicker
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -41,16 +42,20 @@ fun NewEntryScreen(navController: NavController) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedLatLng by remember { mutableStateOf<LatLng?>(null) }
 
+    // Menyimpan tanggal yang dipilih
+    var selectedDate by remember { mutableStateOf(Calendar.getInstance().time) }
+
+    // Format tanggal
+    val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
+    val formattedDate = dateFormat.format(selectedDate)
+
+    // Menambahkan status pencarian
     var searchQuery by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(-6.2, 106.8167), 10f) // Jakarta
     }
-
-    val currentDate = remember { Calendar.getInstance().time }
-    val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
-    val formattedDate = dateFormat.format(currentDate)
 
     suspend fun searchLocation(query: String, context: Context): LatLng? {
         return withContext(Dispatchers.IO) {
@@ -87,6 +92,10 @@ fun NewEntryScreen(navController: NavController) {
                     }
                 },
                 actions = {
+                    // Tombol untuk membuka DatePickerDialog
+                    IconButton(onClick = { showDatePickerDialog(context, onDateSelected = { selectedDate = it }) }) {
+                        Icon(Icons.Filled.DateRange, contentDescription = "Pick Date")
+                    }
                     IconButton(
                         onClick = {
                             if (entryContent.isNotBlank()) {
@@ -95,7 +104,7 @@ fun NewEntryScreen(navController: NavController) {
                                         JournalRepository.addEntry(
                                             context = context,
                                             content = entryContent,
-                                            date = currentDate,
+                                            date = selectedDate,
                                             hasImage = selectedImageUri != null,
                                             hasLocation = selectedLatLng != null,
                                             locationName = if (selectedLatLng != null) "Lokasi Ditentukan" else "",
@@ -104,8 +113,6 @@ fun NewEntryScreen(navController: NavController) {
                                             imageUri = selectedImageUri
                                         )
                                         snackbarHostState.showSnackbar("Jurnal Published")
-
-                                        // ✅ Navigasi ke JourneyScreen dengan benar agar BottomBar muncul
                                         navController.navigate(Screen.Journey.route) {
                                             popUpTo(Screen.Journey.route) {
                                                 inclusive = true
@@ -247,4 +254,21 @@ fun NewEntryScreen(navController: NavController) {
             }
         }
     }
+}
+
+fun showDatePickerDialog(context: Context, onDateSelected: (Date) -> Unit) {
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val selectedCalendar = Calendar.getInstance().apply {
+                set(year, month, dayOfMonth)
+            }
+            onDateSelected(selectedCalendar.time)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+    datePickerDialog.show()
 }

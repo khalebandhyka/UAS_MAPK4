@@ -1,8 +1,6 @@
 package com.example.journeyjournal.screen
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.location.Geocoder
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,9 +13,6 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MissingPermission")
@@ -41,57 +36,11 @@ fun AtlasScreen(navController: NavController) {
         position = CameraPosition.fromLatLngZoom(initialPosition, 10f)
     }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var isSearching by remember { mutableStateOf(false) }
-    var searchedLocation by remember { mutableStateOf<LatLng?>(null) }
-
-    // Function to search location by name
-    suspend fun searchLocation(query: String, context: Context): LatLng? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val geocoder = Geocoder(context, Locale.getDefault())
-                val addresses = geocoder.getFromLocationName(query, 1)
-                if (!addresses.isNullOrEmpty()) {
-                    LatLng(addresses[0].latitude, addresses[0].longitude)
-                } else null
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(title = { Text("Atlas") })
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Search Location") },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    trailingIcon = {
-                        Button(onClick = { isSearching = true }) {
-                            Text("Go")
-                        }
-                    }
-                )
-            }
+            TopAppBar(title = { Text("Atlas") })
         }
     ) { paddingValues ->
-        LaunchedEffect(isSearching) {
-            if (isSearching && searchQuery.isNotBlank()) {
-                val location = searchLocation(searchQuery, context)
-                location?.let {
-                    searchedLocation = it
-                    cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 15f))
-                }
-                isSearching = false
-            }
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -102,16 +51,7 @@ fun AtlasScreen(navController: NavController) {
                 cameraPositionState = cameraPositionState,
                 uiSettings = MapUiSettings(zoomControlsEnabled = true)
             ) {
-                // Marker untuk hasil pencarian
-                searchedLocation?.let {
-                    Marker(
-                        state = MarkerState(position = it),
-                        title = "Search Result",
-                        snippet = searchQuery
-                    )
-                }
-
-                // Marker dari journal entries
+                // Marker untuk journal entries
                 entriesWithLocation.forEach { entry ->
                     entry.latitude?.let { lat ->
                         entry.longitude?.let { lng ->
