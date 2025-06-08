@@ -1,26 +1,26 @@
+// ✅ Migrated JournalRepository.kt
 package com.example.ujournal.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Base64
 import com.example.ujournal.data.model.JournalEntry
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.*
 
 object JournalRepository {
     private val entries = mutableListOf<JournalEntry>()
     private val firestore = FirebaseFirestore.getInstance().apply {
-        useEmulator("10.0.2.2", 8080) // Firestore Emulator
+        useEmulator("10.0.2.2", 8080)
+    }
+    private val storage = FirebaseStorage.getInstance().apply {
+        useEmulator("10.0.2.2", 9199)
     }
 
-    fun getAllEntries(): List<JournalEntry> {
-        return entries.sortedByDescending { it.date }
-    }
+    fun getAllEntries(): List<JournalEntry> = entries.sortedByDescending { it.date }
 
-    fun getEntryById(id: String): JournalEntry? {
-        return entries.find { it.id == id }
-    }
+    fun getEntryById(id: String): JournalEntry? = entries.find { it.id == id }
 
     suspend fun fetchEntriesFromFirestore(): List<JournalEntry> {
         val snapshot = firestore.collection("journal_entries").get().await()
@@ -35,13 +35,12 @@ object JournalRepository {
                     locationName = doc.getString("locationName") ?: "",
                     latitude = doc.getDouble("latitude"),
                     longitude = doc.getDouble("longitude"),
-                    imageBase64 = doc.getString("imageBase64")
+                    imageUrl = doc.getString("imageUrl")
                 )
             } catch (e: Exception) {
                 null
             }
         }
-
         entries.clear()
         entries.addAll(fetchedEntries)
         return entries.sortedByDescending { it.date }
@@ -60,8 +59,14 @@ object JournalRepository {
     ): String {
         val id = UUID.randomUUID().toString()
 
-        val imageBase64: String? = if (hasImage && imageUri != null) {
-            encodeImageToBase64(context, imageUri)
+        val imageUrl: String? = if (hasImage && imageUri != null) {
+            val storageRef = storage.reference.child("images/$id.jpg")
+            val stream = context.contentResolver.openInputStream(imageUri)
+            stream?.let {
+                storageRef.putStream(it).await()
+                it.close()
+                storageRef.downloadUrl.await().toString()
+            }
         } else null
 
         val entry = JournalEntry(
@@ -73,7 +78,7 @@ object JournalRepository {
             locationName = locationName,
             latitude = latitude,
             longitude = longitude,
-            imageBase64 = imageBase64
+            imageUrl = imageUrl
         )
 
         val firestoreEntry = hashMapOf(
@@ -85,7 +90,7 @@ object JournalRepository {
             "locationName" to locationName,
             "latitude" to latitude,
             "longitude" to longitude,
-            "imageBase64" to imageBase64
+            "imageUrl" to imageUrl
         )
 
         firestore.collection("journal_entries").document(id).set(firestoreEntry).await()
@@ -104,8 +109,14 @@ object JournalRepository {
         longitude: Double? = null,
         imageUri: Uri? = null
     ) {
-        val imageBase64: String? = if (hasImage && imageUri != null) {
-            encodeImageToBase64(context, imageUri)
+        val imageUrl: String? = if (hasImage && imageUri != null) {
+            val storageRef = storage.reference.child("images/$id.jpg")
+            val stream = context.contentResolver.openInputStream(imageUri)
+            stream?.let {
+                storageRef.putStream(it).await()
+                it.close()
+                storageRef.downloadUrl.await().toString()
+            }
         } else null
 
         val entryIndex = entries.indexOfFirst { it.id == id }
@@ -118,7 +129,7 @@ object JournalRepository {
                 locationName = locationName,
                 latitude = latitude,
                 longitude = longitude,
-                imageBase64 = imageBase64 ?: oldEntry.imageBase64
+                imageUrl = imageUrl ?: oldEntry.imageUrl
             )
             entries[entryIndex] = updatedEntry
         }
@@ -130,7 +141,7 @@ object JournalRepository {
             "locationName" to locationName,
             "latitude" to latitude,
             "longitude" to longitude,
-            "imageBase64" to imageBase64
+            "imageUrl" to imageUrl
         ).filterValues { it != null }
 
         firestore.collection("journal_entries").document(id).update(updates).await()
@@ -143,17 +154,5 @@ object JournalRepository {
 
     fun clearAll() {
         entries.clear()
-    }
-
-    // 🔽 Tambahan: fungsi encode Base64 dari Uri gambar
-    private fun encodeImageToBase64(context: Context, imageUri: Uri): String? {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(imageUri)
-            val bytes = inputStream?.readBytes()
-            inputStream?.close()
-            Base64.encodeToString(bytes, Base64.DEFAULT)
-        } catch (e: Exception) {
-            null
-        }
     }
 }

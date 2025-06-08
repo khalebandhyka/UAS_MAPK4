@@ -1,6 +1,6 @@
+// ✅ Migrated EntryDetailScreen.kt to use imageUrl
 package com.example.ujournal.ui.screens
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.example.ujournal.Screen
 import com.example.ujournal.data.repository.JournalRepository
 import java.text.SimpleDateFormat
@@ -28,7 +27,6 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
     val entry = remember { JournalRepository.getEntryById(entryId) }
     var showMenu by remember { mutableStateOf(false) }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val context = LocalContext.current
 
     if (entry == null) {
         Box(
@@ -91,7 +89,7 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            if (entry.hasImage && entry.imageBase64 != null) {
+            if (entry.hasImage && entry.imageUrl != null) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -99,18 +97,13 @@ fun EntryDetailScreen(navController: NavController, entryId: String) {
                         .padding(bottom = 16.dp)
                 ) {
                     Image(
-                        painter = rememberAsyncImagePainter(
-                            ImageRequest.Builder(context)
-                                .data(data = entry.imageBase64)
-                                .build()
-                        ),
+                        painter = rememberAsyncImagePainter(entry.imageUrl),
                         contentDescription = "Journal Image",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 }
             } else if (entry.hasImage) {
-                // Fallback if hasImage is true but imageUri is null
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

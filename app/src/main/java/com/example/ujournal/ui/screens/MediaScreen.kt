@@ -1,3 +1,4 @@
+// ✅ Migrated MediaScreen.kt to use imageUrl
 package com.example.ujournal.ui.screens
 
 import androidx.compose.foundation.Image
@@ -16,9 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.example.ujournal.Screen
-import com.example.ujournal.data.model.JournalEntry
 import com.example.ujournal.data.repository.JournalRepository
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,7 +27,7 @@ import androidx.compose.foundation.layout.statusBars
 @Composable
 fun MediaScreen(navController: NavController) {
     val entriesWithImages = remember {
-        JournalRepository.getAllEntries().filter { it.hasImage && it.imageBase64 != null }
+        JournalRepository.getAllEntries().filter { it.hasImage && it.imageUrl != null }
     }
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
@@ -74,10 +73,9 @@ fun MediaScreen(navController: NavController) {
 
 @Composable
 fun MediaItem(
-    entry: JournalEntry,
+    entry: com.example.ujournal.data.model.JournalEntry,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
     val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     val formattedDate = dateFormat.format(entry.date)
 
@@ -90,13 +88,9 @@ fun MediaItem(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (entry.imageBase64 != null) {
+            if (entry.imageUrl != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(context)
-                            .data(data = entry.imageBase64)
-                            .build()
-                    ),
+                    painter = rememberAsyncImagePainter(entry.imageUrl),
                     contentDescription = "Journal Image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -115,7 +109,6 @@ fun MediaItem(
                 }
             }
 
-            // Date overlay
             Surface(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
