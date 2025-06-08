@@ -26,6 +26,7 @@ espresso-core = "3.5.1"
 playServicesMaps = "19.1.0"
 firebaseFirestoreKtx = "25.1.4"
 firebaseStorageKtx = "21.0.2"
+webkit = "1.14.0"
 
 [libraries]
 # AndroidX
@@ -57,6 +58,7 @@ compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

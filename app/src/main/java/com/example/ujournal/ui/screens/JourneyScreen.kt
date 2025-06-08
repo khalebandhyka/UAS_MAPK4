@@ -1,5 +1,6 @@
 package com.example.ujournal.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.webkit.Profile
+import coil.compose.rememberImagePainter
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +41,7 @@ fun JourneyScreen(navController: NavController) {
     val username = currentUser?.displayName ?: "Guest"
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val photoUrl = currentUser?.photoUrl
 
     Scaffold(
         topBar = {
@@ -44,8 +51,25 @@ fun JourneyScreen(navController: NavController) {
                     IconButton(onClick = { /* TODO: Implement search */ }) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
-                    IconButton(onClick = { /* TODO: Navigate to profile */ }) {
-                        Icon(Icons.Filled.Person, contentDescription = "Profile")
+                    IconButton(onClick = {
+                        navController.navigate(Screen.Profile.route)
+                    }) {
+                        if (photoUrl != null) {
+                            Image(
+                                painter = rememberImagePainter(data = photoUrl),
+                                contentDescription = "Foto Profil",
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile",
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.padding(top = statusBarHeight)

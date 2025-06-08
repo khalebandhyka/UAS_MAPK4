@@ -160,6 +160,9 @@ fun UJournalApp() {
             composable(Screen.Journey.route) {
                 JourneyScreen(navController = navController)
             }
+            composable(Screen.Profile.route) {
+                ProfileScreen(navController = navController)
+            }
             composable(Screen.NewEntry.route) {
                 NewEntryScreen(navController = navController)
             }

@@ -2,6 +2,7 @@ package com.example.ujournal
 
 sealed class Screen(val route: String) {
     object Journey : Screen("journey")
+    object Profile : Screen("profile")
     object NewEntry : Screen("new_entry")
     object EntryDetail : Screen("entry_detail")
     object EditEntry : Screen("edit_entry")
