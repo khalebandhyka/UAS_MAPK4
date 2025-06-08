@@ -1,6 +1,8 @@
-// ✅ Migrated EditEntryScreen.kt to use imageUrl
+// ✅ Full Edited EditEntryScreen.kt with working GoogleMap location picker
 package com.example.ujournal.ui.screens
 
+import android.content.Context
+import android.location.Geocoder
 import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -14,7 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.data.repository.JournalRepository
 import com.example.ujournal.ui.components.ImagePicker
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,7 +37,43 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
     var showImagePicker by remember { mutableStateOf(entry?.hasImage ?: false) }
     var showLocationPicker by remember { mutableStateOf(entry?.hasLocation ?: false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedLatLng by remember {
+        mutableStateOf(entry?.let {
+            if (it.latitude != null && it.longitude != null) LatLng(it.latitude, it.longitude) else null
+        })
+    }
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(selectedLatLng ?: LatLng(-6.2, 106.8167), 10f)
+    }
+
+    suspend fun searchLocation(query: String, context: Context): LatLng? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                val addresses = geocoder.getFromLocationName(query, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    LatLng(addresses[0].latitude, addresses[0].longitude)
+                } else null
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    LaunchedEffect(isSearching) {
+        if (isSearching && searchQuery.isNotBlank()) {
+            val location = searchLocation(searchQuery, context)
+            location?.let {
+                selectedLatLng = it
+                cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 15f))
+            }
+            isSearching = false
+        }
+    }
 
     if (entry == null) {
         Box(
@@ -67,7 +111,9 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                                         content = entryContent,
                                         hasImage = selectedImageUri != null || entry.imageUrl != null,
                                         hasLocation = showLocationPicker,
-                                        locationName = if (showLocationPicker) "Updated Location" else "",
+                                        locationName = if (showLocationPicker && selectedLatLng != null) "Updated Location" else entry.locationName,
+                                        latitude = selectedLatLng?.latitude ?: entry.latitude,
+                                        longitude = selectedLatLng?.longitude ?: entry.longitude,
                                         imageUri = selectedImageUri
                                     )
                                     navController.popBackStack()
@@ -146,7 +192,49 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
 
             if (showLocationPicker) {
                 Spacer(modifier = Modifier.height(16.dp))
-                LocationPickerPlaceholder()
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Cari lokasi...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotBlank()) {
+                                isSearching = true
+                            }
+                        }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng -> selectedLatLng = latLng }
+                ) {
+                    selectedLatLng?.let {
+                        Marker(
+                            state = MarkerState(position = it),
+                            title = "Lokasi Dipilih",
+                            snippet = "Klik simpan untuk menyimpan lokasi ini"
+                        )
+                    }
+                }
+
+                selectedLatLng?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Lokasi dipilih: ${it.latitude}, ${it.longitude}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
 
@@ -163,22 +251,6 @@ fun EditEntryScreen(navController: NavController, entryId: String) {
                     showDeleteConfirmation = false
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun LocationPickerPlaceholder() {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Location Picker would appear here")
         }
     }
 }
