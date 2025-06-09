@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.ujournal.Screen
@@ -114,28 +115,50 @@ fun CalendarScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-                daysOfWeek.forEach { day ->
-                    Text(
-                        text = day,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier
+                        .widthIn(max = 400.dp) // sesuaikan dengan CalendarGrid
+                        .fillMaxWidth()
+                ) {
+                    val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+                    daysOfWeek.forEach { day ->
+                        Text(
+                            text = day,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(8.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
 
+
             Spacer(modifier = Modifier.height(8.dp))
 
-            CalendarGrid(
-                currentMonth = currentMonth,
-                daysWithEntries = daysWithEntries,
-                selectedDate = selectedDate,
-                onDateSelected = { date ->
-                    selectedDate = date
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                CalendarGrid(
+                    currentMonth = currentMonth,
+                    daysWithEntries = daysWithEntries,
+                    selectedDate = selectedDate,
+                    onDateSelected = { date ->
+                        selectedDate = date
+                    },
+                    maxWidth = 400.dp
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -191,7 +214,8 @@ fun CalendarGrid(
     currentMonth: Calendar,
     daysWithEntries: Set<Int>,
     selectedDate: Date?,
-    onDateSelected: (Date) -> Unit
+    onDateSelected: (Date) -> Unit,
+    maxWidth: Dp = Dp.Unspecified
 ) {
     val calendar = currentMonth.clone() as Calendar
     calendar.set(Calendar.DAY_OF_MONTH, 1)
@@ -207,7 +231,9 @@ fun CalendarGrid(
         } else null
     } else null
 
-    Column {
+    Column(
+        modifier = if (maxWidth != Dp.Unspecified) Modifier.widthIn(max = maxWidth) else Modifier
+    ) {
         var dayCounter = 1
         for (week in 0 until 6) {
             if (dayCounter > daysInMonth) break
@@ -215,7 +241,6 @@ fun CalendarGrid(
             Row(modifier = Modifier.fillMaxWidth()) {
                 for (day in 0 until 7) {
                     if (week == 0 && day < firstDayOfWeek || dayCounter > daysInMonth) {
-                        // Empty cell
                         Box(
                             modifier = Modifier
                                 .weight(1f)
